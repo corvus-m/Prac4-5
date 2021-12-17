@@ -44,16 +44,15 @@ Se debe meter el token de sesión por headers.
 
 ## getRecipes 
 #### Devuelve todas las recetas.
-Se debe meter el token de sesión por headers.
+
 
 ## getRecipe
 #### Devuelve la receta pedida por id
-Se debe meter el token de sesión por headers.
+
 
 ## getUser 
 #### Devuelve un usuario pedido por id
-Se debe meter el token de sesión por headers.
+
 
 ## getUsers 
 #### Devuelve todos los usuarios
-Se debe meter el token de sesión por headers.
