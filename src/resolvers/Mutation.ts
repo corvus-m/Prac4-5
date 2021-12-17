@@ -50,8 +50,7 @@ export const Mutation ={
         // console.log(email);
         if(email == null || password == null){
           console.log("faltan email o contrasena")
-          res.status(401)
-          return "faltan email o contraseña"
+          return   "faltan email o contraseña"
         }
   
         const existe = await collection.findOne({ email });
@@ -67,10 +66,10 @@ export const Mutation ={
           
           // const crypto = require("crypto")
       
-       
-          await collection.insertOne({ email, password:password1, token });
+       const recetas:string[] = [];
+          await collection.insertOne({ email, password:password1, token, recetas });
         console.log(`Bienvenido usuario, tu token de sesion es: ${token}`);
-        res.status(200);
+        //res.status(200);
         return `Bienvenido usuario, tu token de sesion es: ${token}`;
     },
 
@@ -130,7 +129,7 @@ export const Mutation ={
     const usu = await collectionUsu.findOne({token});
     if (usu == null){
       
-       console.log(`error`)
+     //  console.log(`error`)
       const token = "Token de sesion invalido";
       res.status(404);
       return token;
@@ -301,7 +300,7 @@ SignOut: async (parent:any, args:any, {token, collectionUsu, collectionRec, coll
         const recetas:string[] = ingrediente.recetas;
         recetas.forEach( async (rec:string) => {
           await collectionRec.findOneAndDelete({rec});
-          await collectionUsu.updateOne({email}, {$pullAll:{recetas:rec}} )
+          await collectionUsu.updateOne({email}, {$pull:{recetas:rec}} )
         } );
         //await collection.updateOne({ email }, {$set: { token: token } });
         
@@ -352,9 +351,9 @@ SignOut: async (parent:any, args:any, {token, collectionUsu, collectionRec, coll
           const ingredientes:string[] = receta!.ingredientes;
           ingredientes.forEach( async (ing:string) => {
             //await collectionRec.findOneAndDelete({rec});
-            await collectionIng.updateOne({name:ing}, {$pullAll:{recetas:name}} )
+            await collectionIng.updateOne({name:ing}, {$pull:{recetas:name}} )
           } );
-          await collectionUsu.updateOne({email}, {$pullAll:{recetas:name}} )
+          await collectionUsu.updateOne({email}, {$pull:{recetas:name}} )
           //await collection.updateOne({ email }, {$set: { token: token } });
           
   
@@ -401,7 +400,7 @@ SignOut: async (parent:any, args:any, {token, collectionUsu, collectionRec, coll
           }else{
             if(description == null && ingredientes == null){
               res.status(405);
-              return "Para modificar una receta debes añadir almenos un campo que quieras modificar";
+              return "Para modificar una receta debes añadir al menos un campo que quieras modificar";
             }else if(description== null){
               await collectionRec.updateOne({name}, {$set:{description}})
             } else if(ingredientes== null){

@@ -36,8 +36,8 @@ type Query {
 type Mutation {
     addIngredient(name:String): String 
     addRecipie(name:String!, description:String!, ingredientes:[String]!): String
-    SignIn(email:String, password:String): String!
-    LogIn(email:String, password:String): String!
+    SignIn: String!
+    LogIn: String!
     LogOut:String!
     SignOut:String!
     deleteIngredient(ingredient:String!):String!

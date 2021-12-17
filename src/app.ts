@@ -35,9 +35,9 @@ const run =async () => {
       resolvers,
       context: async({req,res}) => {
         const abresesion = ["SignIn", "LogIn"];
-        const cierrasesion = ["SignOut", "LogOut"]
-        const cambia = ["addIngredient", "addRecipie", "deleteIngredient","deleteRecipe","updateRecipe"]
-        const muestra = ["getRecipes", "getRecipe","getUser","getUsers"] 
+        // const cierrasesion = ["SignOut", "LogOut"]
+        // const cambia = ["addIngredient", "addRecipie", "deleteIngredient","deleteRecipe","updateRecipe"]
+        // const muestra = ["getRecipes", "getRecipe","getUser","getUsers"] 
         
         const collectionUsu = db.collection("usuarios");
         const collectionIng = db.collection("ingredientes");
@@ -60,46 +60,20 @@ const run =async () => {
           }
 
           //const cierrasesion = ["SignOut", "LogOut"]
-        }else if(cierrasesion.some(f => req.body.query.includes(f))){ //añadir cosas logeado
-          const token = req.headers.token;
-          if (token == null) return res.status(500).send("Falta token de sesion");
-
-          
-          const usuario = collectionUsu.findOne({token});                //await no hace falta
-          if (usuario == null){
-            return res.status(500).send("Token de sesion invalido");
-          }
-          return{token, collectionUsu,collectionRec,collectionIng, res}
         }
-
-        //const anade = ["addIngredient", "addRecipie"]
-        else if(cambia.some(f => req.body.query.includes(f))){ //añadir cosas logeado
-          const token = req.headers.token;
-          
-          if (token == null) {
-             
-             console.log("ERROR");
-            const token = "Falta token de sesion";
-            return{token, res}
-          }
-          return{  token, res, collectionIng, collectionRec, collectionUsu}
-        }//fin añade cosas
-
-
-          //const muestra = ["getRecipes", "getRecipe"] 
-        else if(muestra.some(f => req.body.query.includes(f))){ //mostrar cosas - usa token 
+   
           const token = req.headers.token;
           //console.log("entra en busca ");
 
           if (token == null) {
              
-             console.log("ERROR");
+             //console.log("ERROR");
             const token = "Falta token de sesion";
             return{token, res}
           }
           return{token, res, collectionIng, collectionRec, collectionUsu}
 
-        }
+        
 
 
       }
