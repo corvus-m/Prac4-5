@@ -119,20 +119,26 @@ export const Mutation ={
       res.status(409).send("No existe ningun usuario con este email");
   },
 
-  LogOut: async (parent:any, args:any, {token, res}:{token:string, res:any}) => {
+  LogOut: async (parent:any, args:any, {token, collectionUsu, res}:{token:string,collectionUsu:Collection, res:any}) => {
    
     if(token == null){
       console.log("token invalido")
       res.status(401)
       return "token invalido"
     }
-   
-    const db = await connectDB();
-    const collection = db.collection("usuarios"); 
+
+    const usu = await collectionUsu.findOne({token});
+    if (usu == null){
+      
+       console.log(`error`)
+      const token = "Token de sesion invalido";
+      res.status(404);
+      return token;
+    }
     
     try{
-      await collection.updateOne({token}, {$set: { token: undefined } }) 
-    
+      await collectionUsu.updateOne({token}, {$set: { token: undefined } }) 
+      
     } catch(e) {
       console.log(e);
     }
@@ -144,6 +150,39 @@ export const Mutation ={
 
     res.status(200);
     return "Sesion cerrada";
+},
+
+SignOut: async (parent:any, args:any, {token, collectionUsu, res}:{token:string, collectionUsu, res:any}) => {
+   
+  if(token == null){
+    console.log("token invalido")
+    res.status(401);
+    return "token invalido"
+  }
+  const usu = await collectionUsu.findOne({token});
+  if (usu == null){
+    
+     console.log(`error`)
+    const token = "Token de sesion invalido";
+    res.status(404);
+    return token;
+  }
+  
+  
+  try{
+    await collectionUsu.findOneAndDelete({token}) 
+  
+  } catch(e) {
+    console.log(e);
+  }
+    
+  
+  
+  
+  //fin usuario existe
+
+  res.status(200);
+  return "Usuario eliminado";
 },
 
     addIngredient: async (parent:any, {name}:{ name:string},  {token, collectionIng, collectionUsu, res}:{token:string, collectionIng:Collection, collectionUsu:Collection,  res:any}) => { //buscar primero si ya existe ese ingredient
@@ -240,6 +279,8 @@ export const Mutation ={
       return token;
     }
     else{
+      try{
+
       const email = usu!.email;
       const ingrediente:IngredientFind = collectionIng.findOne({name:ingredient}) as unknown as IngredientFind;
       const author = ingrediente!.autor;
@@ -252,7 +293,7 @@ export const Mutation ={
         const recetas:string[] = ingrediente.recetas;
         recetas.forEach( async (rec:string) => {
           await collectionRec.findOneAndDelete({rec});
-          await collectionUsu.updateOne({email}, {$pop:{recetas:rec}} )
+          await collectionUsu.updateOne({email}, {$pullAll:{recetas:rec}} )
         } );
         //await collection.updateOne({ email }, {$set: { token: token } });
         
@@ -264,7 +305,9 @@ export const Mutation ={
         return "Ingrediente eliminado";
 
       }
-
+    }catch (e) {
+      console.log(e);
+    } 
 
 
       } 
@@ -301,9 +344,9 @@ export const Mutation ={
           const ingredientes:string[] = receta!.ingredientes;
           ingredientes.forEach( async (ing:string) => {
             //await collectionRec.findOneAndDelete({rec});
-            await collectionIng.updateOne({name:ing}, {$pop:{recetas:recipe}} )
+            await collectionIng.updateOne({name:ing}, {$pullAll:{recetas:recipe}} )
           } );
-          await collectionUsu.updateOne({email}, {$pull:{recetas:recipe}} )
+          await collectionUsu.updateOne({email}, {$pullAll:{recetas:recipe}} )
           //await collection.updateOne({ email }, {$set: { token: token } });
           
   
@@ -323,7 +366,7 @@ export const Mutation ={
     }
      
 
-      return "Nop";
+      return "No existe esa recita, comprueba el nombre.";
       }, //fin deleteReceta
 
 }
