@@ -28,7 +28,7 @@ type Recipe{
 
 type Query {
   getRecipes: [Recipe] 
-  getRecipe(name: String): Recipe!
+  getRecipe(id_str: String): Recipe!
   getUser(id_str: String!): User
   getUsers: [User]
 }

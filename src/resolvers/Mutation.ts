@@ -202,9 +202,8 @@ SignOut: async (parent:any, args:any, {token, collectionUsu, collectionRec, coll
       if (author == null){
         
          console.log(`error`)
-        const token = "Token de sesion invalido";
-        res.status(404)//quitar?
-        return{token, res}
+
+        return "Token de sesion invalido";
       }else{
         res.status(200);
         console.log(`author email: ${author!.email}`)
@@ -238,9 +237,8 @@ SignOut: async (parent:any, args:any, {token, collectionUsu, collectionRec, coll
       if (author == null){
         
          console.log(`error`)
-        const token = "Token de sesion invalido";
-        res.status(404)//quitar?
-        return{token, res}
+        
+         return "Token de sesion invalido";
       }else{
         res.status(200);
         console.log(`author email: ${author!.email}`) //para test

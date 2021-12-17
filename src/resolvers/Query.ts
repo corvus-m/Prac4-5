@@ -10,50 +10,29 @@ import { AuthorFind, IngredientFind, RecipieFind } from "../types";
 
 export const Query = {
     
-    getRecipes: async (parent: any, args: {}, {token, collectionIng, collectionRec, res}:{token:string, collectionIng:Collection, collectionRec:Collection,  res:any}) => {
+    getRecipes: async (parent: any, args: {}, { collectionIng, collectionRec, res}:{ collectionIng:Collection, collectionRec:Collection,  res:any}) => {
         
-        if (token == "Falta token de sesion" || token == "Token de sesion invalido" ){
-            return ; //res ya establecido
-          }
-    
-
         const recetas =  collectionRec.find({}) ;
         return recetas.toArray();
-         
-            
-        
+          
     },
 
-    getRecipe: async (parent: any, {name}: {name:string}, 
-      {token, collectionIng, collectionRec, res}:{token:string, collectionIng:Collection, collectionRec:Collection,  res:any}) => {
-      
-      if (token == "Falta token de sesion" || token == "Token de sesion invalido" ){
-          return ; //res ya establecido
-        }
-  
-
-      const receta =  collectionRec.findOne({name}) ;
+    getRecipe: async (parent: any, {id_str}: {id_str:string}, 
+      {  collectionRec, res}:{  collectionRec:Collection,  res:any}) => {
+ 
+      const receta =  await collectionRec.findOne({_id: new ObjectId(id_str)}) ;
       res.status(200);
       return receta;
   
   },
 
   getUser:async (parent: any, {id_str}: {id_str:string}, 
-    {token,  collectionUsu, res}:{token:string, collectionUsu:Collection,  res:any}) => {
+    {  collectionUsu, res}:{ collectionUsu:Collection,  res:any}) => {
       
-      if (token == "Falta token de sesion" || token == "Token de sesion invalido" ){
-        return ; //res ya establecido
-      }
-      // try{
+     
 
       const usuario :AuthorFind = await collectionUsu.findOne({_id: new ObjectId(id_str)}) as unknown as AuthorFind  ;
       
-      // if (usuario){
-      //   console.log(usuario._id);
-
-      // // console.log(usuario!._id);
-      // // console.log(usuario!.email);
-      // }
       
       if(usuario == null){
         res.status(404);
@@ -61,19 +40,13 @@ export const Query = {
       }
       res.status(200);
       return usuario;
-    // } catch (e){
-    //   console.log(e)
-    // }
-
+  
   },
 
   getUsers:async (parent: any, args:any, 
-    {token,  collectionUsu, res}:{token:string, collectionUsu:Collection,  res:any}) => {
+    {  collectionUsu, res}:{ collectionUsu:Collection,  res:any}) => {
       
-      if (token == "Falta token de sesion" || token == "Token de sesion invalido" ){
-        return ; //res ya establecido
-      }
-
+     
       const usuarios =  collectionUsu.find({}) ;
       return usuarios.toArray();
 
@@ -110,7 +83,6 @@ export const Recipe = {
     return elAutor
   },
   ingredients:  async (parent:any, args: any, {collectionIng}:{collectionIng:Collection}) => {
-    console.log("ALGOALGOALGOJAMON");
           const Ingredientes: IngredientFind[] =parent!.ingredientes.map(async (ing:string) =>{
             const elIngrediente:IngredientFind=  await collectionIng.findOne({ name: ing }) as unknown as IngredientFind ;
             return elIngrediente

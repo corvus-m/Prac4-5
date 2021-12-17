@@ -6,6 +6,7 @@ import { connectDB } from "./mongo";
 import { Collection } from "mongodb";
 import { Query, Recipe, Ingredient, User } from "./resolvers/Query";
 import { Mutation } from "./resolvers/Mutation";
+
 const config = require('./config.js');
 
 
@@ -38,7 +39,7 @@ const run =async () => {
         // const cierrasesion = ["SignOut", "LogOut"]
         // const cambia = ["addIngredient", "addRecipie", "deleteIngredient","deleteRecipe","updateRecipe"]
         // const muestra = ["getRecipes", "getRecipe","getUser","getUsers"] 
-        
+        const muestra = ["getRecipes", "getRecipe","getUser","getUsers"]
         const collectionUsu = db.collection("usuarios");
         const collectionIng = db.collection("ingredientes");
         const collectionRec = db.collection("recetas");
@@ -60,6 +61,10 @@ const run =async () => {
           }
 
           //const cierrasesion = ["SignOut", "LogOut"]
+        } else if(muestra.some(f => req.body.query.includes(f))){
+         
+          return{ res, collectionIng, collectionRec, collectionUsu}
+
         }
    
           const token = req.headers.token;
