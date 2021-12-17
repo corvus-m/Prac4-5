@@ -1,4 +1,4 @@
-import { Collection, Db, MongoClient } from "mongodb";
+import { Collection, Db, MongoClient, ObjectId } from "mongodb";
 import { connectDB } from "../mongo";
 import { AuthorFind, IngredientFind, RecipieFind } from "../types";
 
@@ -38,20 +38,36 @@ export const Query = {
   
   },
 
-  getUser:async (parent: any, {_id}: {_id:any}, 
+  getUser:async (parent: any, {id_str}: {id_str:string}, 
     {token,  collectionUsu, res}:{token:string, collectionUsu:Collection,  res:any}) => {
       
       if (token == "Falta token de sesion" || token == "Token de sesion invalido" ){
         return ; //res ya establecido
       }
+      // try{
 
-      const usuario =  collectionUsu.findOne({_id}) ;
+      const usuario :AuthorFind = await collectionUsu.findOne({_id: new ObjectId(id_str)}) as unknown as AuthorFind  ;
+      
+      // if (usuario){
+      //   console.log(usuario._id);
+
+      // // console.log(usuario!._id);
+      // // console.log(usuario!.email);
+      // }
+      
+      if(usuario == null){
+        res.status(404);
+      return usuario;
+      }
       res.status(200);
       return usuario;
+    // } catch (e){
+    //   console.log(e)
+    // }
 
   },
 
-  getUsers:async (parent: any, {_id}: {_id:any}, 
+  getUsers:async (parent: any, args:any, 
     {token,  collectionUsu, res}:{token:string, collectionUsu:Collection,  res:any}) => {
       
       if (token == "Falta token de sesion" || token == "Token de sesion invalido" ){
@@ -59,7 +75,6 @@ export const Query = {
       }
 
       const usuarios =  collectionUsu.find({}) ;
-      res.status(200);
       return usuarios.toArray();
 
   }
@@ -95,7 +110,7 @@ export const Recipe = {
     return elAutor
   },
   ingredients:  async (parent:any, args: any, {collectionIng}:{collectionIng:Collection}) => {
- 
+    console.log("ALGOALGOALGOJAMON");
           const Ingredientes: IngredientFind[] =parent!.ingredientes.map(async (ing:string) =>{
             const elIngrediente:IngredientFind=  await collectionIng.findOne({ name: ing }) as unknown as IngredientFind ;
             return elIngrediente
@@ -111,6 +126,7 @@ export const Recipe = {
   export const Ingredient = { 
     author: async(parent:any, args: any, {collectionUsu}:{collectionUsu:Collection}) =>{
       const elAutor:AuthorFind = await  collectionUsu.findOne( {email: parent!.autor}) as unknown as AuthorFind;
+      
       return elAutor
     },
 

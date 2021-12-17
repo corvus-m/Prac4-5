@@ -1,11 +1,11 @@
 
 
 import { connectDB } from "./mongo";
-import { Collection } from "mongodb";
+import { Collection, ObjectId } from "mongodb";
 
 
 export type AuthorFind = {
-    _id: string,
+    _id: ObjectId,
     email: string,
     password: string,
     token: string,
@@ -13,7 +13,7 @@ export type AuthorFind = {
 }
 
 export type RecipieFind = {
-    _id: string,
+    _id: ObjectId,
     name: string,
     description: string,
     ingredientes: string[],
@@ -21,7 +21,7 @@ export type RecipieFind = {
 }
 
 export type IngredientFind = {
-    _id: string,
+    _id: ObjectId,
     name: string,
     recetas: string[]
     autor: string

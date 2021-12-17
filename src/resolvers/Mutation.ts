@@ -152,14 +152,14 @@ export const Mutation ={
     return "Sesion cerrada";
 },
 
-SignOut: async (parent:any, args:any, {token, collectionUsu, res}:{token:string, collectionUsu, res:any}) => {
+SignOut: async (parent:any, args:any, {token, collectionUsu, collectionRec, collectionIng, res}:{token:string, collectionUsu:Collection,collectionRec:Collection,collectionIng:Collection, res:any}) => {
    
   if(token == null){
     console.log("token invalido")
     res.status(401);
     return "token invalido"
   }
-  const usu = await collectionUsu.findOne({token});
+  const usu:AuthorFind = await collectionUsu.findOne({token}) as unknown as AuthorFind;
   if (usu == null){
     
      console.log(`error`)
@@ -170,6 +170,14 @@ SignOut: async (parent:any, args:any, {token, collectionUsu, res}:{token:string,
   
   
   try{
+    const recetas:string[] = usu!.recetas
+    recetas.forEach(async (rec:string) =>{
+      const receta:RecipieFind = collectionRec.findOneAndDelete({name:rec}) as unknown as RecipieFind;
+      const ingredientes:string[] = receta!.ingredientes;
+      ingredientes.forEach(async(ing:string) => {
+        collectionIng.findOneAndDelete({name:ing}); //ez
+      })
+    })
     await collectionUsu.findOneAndDelete({token}) 
   
   } catch(e) {
@@ -315,7 +323,7 @@ SignOut: async (parent:any, args:any, {token, collectionUsu, res}:{token:string,
     }, //fin deleteIngredient
 
 
-    deleteRecipe: async (parent:any, { recipe }:{  recipe:string },
+    deleteRecipe: async (parent:any, { name }:{  name:string },
       {token, collectionIng, collectionRec, collectionUsu, res}:{token:string, collectionIng:Collection, collectionRec:Collection, collectionUsu:Collection,  res:any}) => {
  
       const usu = await collectionUsu.findOne({ token });
@@ -329,12 +337,12 @@ SignOut: async (parent:any, args:any, {token, collectionUsu, res}:{token:string,
       else{
         try{
         const email:string = usu!.email;
-        console.log("email");
-        console.log(email);
-        const receta:RecipieFind = await collectionRec.findOne({name:recipe}) as unknown as RecipieFind;
+        // console.log("email");
+        // console.log(email);
+        const receta:RecipieFind = await collectionRec.findOne({name}) as unknown as RecipieFind;
         const author:string = receta!.autor;
-        console.log("autor");
-        console.log(author);
+        // console.log("autor");
+        // console.log(author);
         if (email != author){
           res.status(500);
           return "No puedes borrar una receta que no te pertenece"
@@ -344,14 +352,14 @@ SignOut: async (parent:any, args:any, {token, collectionUsu, res}:{token:string,
           const ingredientes:string[] = receta!.ingredientes;
           ingredientes.forEach( async (ing:string) => {
             //await collectionRec.findOneAndDelete({rec});
-            await collectionIng.updateOne({name:ing}, {$pullAll:{recetas:recipe}} )
+            await collectionIng.updateOne({name:ing}, {$pullAll:{recetas:name}} )
           } );
-          await collectionUsu.updateOne({email}, {$pullAll:{recetas:recipe}} )
+          await collectionUsu.updateOne({email}, {$pullAll:{recetas:name}} )
           //await collection.updateOne({ email }, {$set: { token: token } });
           
   
   
-          await collectionRec.findOneAndDelete({ name:recipe });
+          await collectionRec.findOneAndDelete({ name });
           //res.status(200);
           return "Receta eliminada";
         
@@ -366,41 +374,53 @@ SignOut: async (parent:any, args:any, {token, collectionUsu, res}:{token:string,
     }
      
 
-      return "No existe esa recita, comprueba el nombre.";
+      return "No existe esa receta, comprueba el nombre.";
       }, //fin deleteReceta
 
-}
+      updateRecipe: async (parent:any, { name,description, ingredientes }:{  name:string, description:string, ingredientes:string[] },
+        {token, collectionIng, collectionRec, collectionUsu, res}:{token:string, collectionIng:Collection, collectionRec:Collection, collectionUsu:Collection,  res:any}) => {
+   
+        const usu = await collectionUsu.findOne({ token });
+        
+          if (usu == null){
+                
+          console.log(`error`)
+          const token = "Token de sesion invalido";
+          res.status(404);
+          return token;
+        }
+        else{
+          
+          const email:string = usu!.email;
+          const receta:RecipieFind = await collectionRec.findOne({name}) as unknown as RecipieFind;
+          const author:string = receta!.autor;
+          if (email != author){
+            res.status(500);
+            return "No puedes modificar una receta que no te pertenece"
+    
+          }else{
+            if(description == null && ingredientes == null){
+              res.status(405);
+              return "Para modificar una receta debes añadir almenos un campo que quieras modificar";
+            }else if(description== null){
+              await collectionRec.updateOne({name}, {$set:{description}})
+            } else if(ingredientes== null){
+              await collectionRec.updateOne({name}, {$set:{ingredientes}})
 
+            } else{
+              await collectionRec.updateOne({name}, {$set:{ingredientes,description}})
+            }
 
-// let result = await client.db("pruebaDB").collection("rickroll").find().toArray();
-
-//         let arrSimple:Character[] = await Promise.all(result.map(async (char) => {
             
-//             return {
-//                 id: char.id,
-//                 name: char.name,
-//                 status: char.status,
-//                 species: char.species,
-//                 episode: char.episodes.map((epi:Episode) =>{ 
-//                     return{
-//                         name: epi.name,
-//                         episode: epi.episode,
-//                     }
-//                 })
-
-//             }
-//         } ));
-
-
-
-
-
-// export const Recipe = {
-//   ingredients: async (parent: { ingredients: string[] }, args: any, context: { coleccionIngredientes: Collection, coleccionUsers: Collection }) => {
-//       const Ingredientes: Ingrediente[] = await Promise.all(parent.ingredients.map(async (elem) => {
-//           let IngredienteDB: Ingrediente = await context.coleccionIngredientes.findOne({ name: elem }) as Ingrediente;
-//           return IngredienteDB;
-//       }));
-//       return Ingredientes;
-//   }
-// }
+          }
+          return "Receta modificada correctamente";
+    
+      
+         
+    
+      }
+       
+      return "No existe esa receta, comprueba el nombre.";
+    }
+  
+}

@@ -36,7 +36,7 @@ const run =async () => {
       context: async({req,res}) => {
         const abresesion = ["SignIn", "LogIn"];
         const cierrasesion = ["SignOut", "LogOut"]
-        const cambia = ["addIngredient", "addRecipie", "deleteIngredient","deleteRecipe"]
+        const cambia = ["addIngredient", "addRecipie", "deleteIngredient","deleteRecipe","updateRecipe"]
         const muestra = ["getRecipes", "getRecipe","getUser","getUsers"] 
         
         const collectionUsu = db.collection("usuarios");
@@ -69,7 +69,7 @@ const run =async () => {
           if (usuario == null){
             return res.status(500).send("Token de sesion invalido");
           }
-          return{token, res}
+          return{token, collectionUsu,collectionRec,collectionIng, res}
         }
 
         //const anade = ["addIngredient", "addRecipie"]
@@ -89,7 +89,7 @@ const run =async () => {
           //const muestra = ["getRecipes", "getRecipe"] 
         else if(muestra.some(f => req.body.query.includes(f))){ //mostrar cosas - usa token 
           const token = req.headers.token;
-          console.log("entra en busca recetas");
+          //console.log("entra en busca ");
 
           if (token == null) {
              
