@@ -12,6 +12,7 @@ type Ingredient{
   id: ID!
   name: String!
   recipes: [Recipe!]!
+  author: User!
 }
 
 
@@ -26,16 +27,21 @@ type Recipe{
 
 
 type Query {
-  getRecipes: [Recipe]
-  getRecipe(name: String): Recipe
+  getRecipes: [Recipe] 
+  getRecipe(name: String): Recipe!
+  getUser(id: ID!): Recipe!
+  getUsers: [User]
 }
 
 type Mutation {
-    addIngredient(name:String): String
+    addIngredient(name:String): String 
     addRecipie(name:String!, description:String!, ingredientes:[String]!): String
     SignIn(email:String, password:String): String!
     LogIn(email:String, password:String): String!
-    LogOut(token:String):String!
+    LogOut():String!
+    SignOut():String!
+    deleteIngredient(ingredient:String!):String!
+    deleteRecipe(recipe:String!):String!
 }
 `
 //updateRecipe(id: ID!, recipe): RecipeInput!

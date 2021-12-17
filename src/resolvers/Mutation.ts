@@ -2,6 +2,7 @@ import { Collection, Db, MongoClient } from "mongodb";
 import { connectDB } from "../mongo";
 import { v4 as uuid } from "uuid";
 import { AuthorFind, IngredientFind, RecipieFind } from "../types";
+import e from "express";
 
 const crypto = require("crypto")
 
@@ -9,7 +10,7 @@ const crypto = require("crypto")
 
 const hash = async (password:string) => {
     return new Promise((resolve, reject) => {
-        const salt:string  = crypto.randomBytes(8).toString("hex")
+        const salt:string = crypto.randomBytes(8).toString("hex")
   
         crypto.scrypt(password, salt, 64, (err:any, derivedKey:any) => {
             if (err) reject(err);
@@ -145,23 +146,31 @@ export const Mutation ={
     return "Sesion cerrada";
 },
 
-    addIngredient: async (parent:any, {name}:{ name:string},  {token, collectionIng, collectionRec, res}:{token:string, collectionIng:Collection, collectionRec:Collection,  res:any}) => { //buscar primero si ya existe ese ingredient
+    addIngredient: async (parent:any, {name}:{ name:string},  {token, collectionIng, collectionUsu, res}:{token:string, collectionIng:Collection, collectionUsu:Collection,  res:any}) => { //buscar primero si ya existe ese ingredient
 
-  
-        // const recipes= await collectionRec.find({}).toArray();
-        // if (recipes == null){
-        //   res.status(404);
-        //   console.log("F")
-        //   return "error";
-        // }
+      if (token == "Falta token de sesion" ){
+        return token; //res ya establecido
+      }
 
+      const author = await collectionUsu.findOne({token});
+      if (author == null){
         
+         console.log(`error`)
+        const token = "Token de sesion invalido";
+        res.status(404)//quitar?
+        return{token, res}
+      }else{
+        res.status(200);
+        console.log(`author email: ${author!.email}`)
+      }
+        
+      const correo = author!.email;
         // const recetas = recipes.filter(r => r.ingredients.some((i: string) => i === name));
 
      
 
         try{
-          await collectionIng.insertOne({name });
+          await collectionIng.insertOne({name, autor:correo });
         
         } catch(e) {
         console.log(e); 
@@ -172,59 +181,37 @@ export const Mutation ={
     
 
     addRecipie: async (parent:any, {name, description, ingredientes}:{ name:string, description:string, ingredientes:string[]},
-       {token, collectionIng, collectionRec, res}:{token:string, collectionIng:Collection, collectionRec:Collection,  res:any}) => {
-     try{
+       {token, collectionIng, collectionRec, collectionUsu, res}:{token:string, collectionIng:Collection, collectionRec:Collection, collectionUsu:Collection,  res:any}) => {
+ 
 
-      if (token == "Falta token de sesion" || token == "Falta token de sesion" ){
+      if (token == "Falta token de sesion" ){
         return token; //res ya establecido
       }
 
+      const author = await collectionUsu.findOne({token});
+      if (author == null){
+        
+         console.log(`error`)
+        const token = "Token de sesion invalido";
+        res.status(404)//quitar?
+        return{token, res}
+      }else{
+        res.status(200);
+        console.log(`author email: ${author!.email}`) //para test
+      }
+        
+      const correo = author!.email;
 
-
-      
-      //añadir caso de que falte un ingrediente?
-     
-      let faltaIng:boolean = false;
-      
-      //  ingredientes.filter( async i =>{ 
-      //   console.log(i);
-      //    let Ing:any = await collectionIng.findOne({name:i});
-      //    if (Ing == null){
-      //      console.log("falta Ing")
-      //     faltaIng = true;
-      //     return;
-      //    }
-      //     else {
-      //       console.log("alo");
-      //       return Ing
-      //    }
-
-      //  })
-
-       if (faltaIng){
-         return "Almenos uno de los ingredientes de la receta no ha sido añadido previamente"
-       }
-
-
-
-      // const author = await collection.findOne({token});
-      // if(author != null){
-      //   const nombre:string = author.email;
-      //   console.log(`${nombre}`);
-      //   console.log(`el nombre`);
-      // }else{
-      //   console.log("Sin autor");
-
-      // }
-      //console.log(author.name);
 
       try{
-      const receta = await collectionRec.insertOne({name, description, ingredientes }); //añadimos la receta //falta author
+      const receta = await collectionRec.insertOne({name, description, ingredientes, autor:correo }); //añadimos la receta //falta author
       
+
       if (receta){
         console.log("receta añadida");
 
-        
+         collectionUsu.updateOne({email:correo }, {$push: { recetas:name  } })
+
         ingredientes.forEach( i => {
           collectionIng.updateOne({name: i}, {$push: { recetas:name  } });
 
@@ -236,14 +223,108 @@ export const Mutation ={
 
       }
 
-      
+      return "Añadida receta";
 
-      return "Añadida receta ingrediente";
-    } catch(e){
-      console.log(e);
+  },
+
+
+  deleteIngredient: async (parent:any, { ingredient }:{  ingredient:string },
+    {token, collectionIng, collectionRec, collectionUsu, res}:{token:string, collectionIng:Collection, collectionRec:Collection, collectionUsu:Collection,  res:any}) => {
+
+    const usu = await collectionUsu.findOne({ token });
+      if (usu == null){
+            
+      console.log(`error`)
+      const token = "Token de sesion invalido";
+      res.status(404);
+      return token;
     }
-  }
+    else{
+      const email = usu!.email;
+      const ingrediente:IngredientFind = collectionIng.findOne({name:ingredient}) as unknown as IngredientFind;
+      const author = ingrediente!.autor;
+      if (email != author){
+        res.status(500);
+        return "No puedes borrar un ingrediente que no te pertenece"
 
+      }else{
+
+        const recetas:string[] = ingrediente.recetas;
+        recetas.forEach( async (rec:string) => {
+          await collectionRec.findOneAndDelete({rec});
+          await collectionUsu.updateOne({email}, {$pop:{recetas:rec}} )
+        } );
+        //await collection.updateOne({ email }, {$set: { token: token } });
+        
+
+
+        await collectionRec.findOneAndDelete({ name:ingredient });
+        res.status(200);
+        
+        return "Ingrediente eliminado";
+
+      }
+
+
+
+      } 
+
+    }, //fin deleteIngredient
+
+
+    deleteRecipe: async (parent:any, { recipe }:{  recipe:string },
+      {token, collectionIng, collectionRec, collectionUsu, res}:{token:string, collectionIng:Collection, collectionRec:Collection, collectionUsu:Collection,  res:any}) => {
+ 
+      const usu = await collectionUsu.findOne({ token });
+        if (usu == null){
+              
+        console.log(`error`)
+        const token = "Token de sesion invalido";
+        res.status(404);
+        return token;
+      }
+      else{
+        try{
+        const email:string = usu!.email;
+        console.log("email");
+        console.log(email);
+        const receta:RecipieFind = await collectionRec.findOne({name:recipe}) as unknown as RecipieFind;
+        const author:string = receta!.autor;
+        console.log("autor");
+        console.log(author);
+        if (email != author){
+          res.status(500);
+          return "No puedes borrar una receta que no te pertenece"
+  
+        }else{
+          
+          const ingredientes:string[] = receta!.ingredientes;
+          ingredientes.forEach( async (ing:string) => {
+            //await collectionRec.findOneAndDelete({rec});
+            await collectionIng.updateOne({name:ing}, {$pop:{recetas:recipe}} )
+          } );
+          await collectionUsu.updateOne({email}, {$pull:{recetas:recipe}} )
+          //await collection.updateOne({ email }, {$set: { token: token } });
+          
+  
+  
+          await collectionRec.findOneAndDelete({ name:recipe });
+          //res.status(200);
+          return "Receta eliminada";
+        
+  
+        }
+  
+      }catch (e) {
+        console.log(e);
+      } 
+  
+        
+    }
+     
+
+      return "Nop";
+      }, //fin deleteReceta
 
 }
 

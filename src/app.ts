@@ -4,7 +4,7 @@ import { typeDefs } from "./schema";
 //import { authenticate } from "./auth";
 import { connectDB } from "./mongo";
 import { Collection } from "mongodb";
-import { Query, Recipe, Ingredient } from "./resolvers/Query";
+import { Query, Recipe, Ingredient, User } from "./resolvers/Query";
 import { Mutation } from "./resolvers/Mutation";
 const config = require('./config.js');
 
@@ -13,7 +13,8 @@ const resolvers = {
   Query,
   Mutation,
   Recipe,
-  Ingredient
+  Ingredient,
+  User
 }
 
 
@@ -35,8 +36,8 @@ const run =async () => {
       context: async({req,res}) => {
         const abresesion = ["SignIn", "LogIn"];
         const cierrasesion = ["SignOut", "LogOut"]
-        const anade = ["addIngredient", "addRecipie"] //separar?
-        const muestra = ["getRecipes", "getRecipe"] //separar?
+        const cambia = ["addIngredient", "addRecipie", "deleteIngredient","deleteRecipe"]
+        const muestra = ["getRecipes", "getRecipe","getUser","getUsers"] 
         
         const collectionUsu = db.collection("usuarios");
         const collectionIng = db.collection("ingredientes");
@@ -72,30 +73,18 @@ const run =async () => {
         }
 
         //const anade = ["addIngredient", "addRecipie"]
-        else if(anade.some(f => req.body.query.includes(f))){ //añadir cosas logeado
+        else if(cambia.some(f => req.body.query.includes(f))){ //añadir cosas logeado
           const token = req.headers.token;
           
           if (token == null) {
              
              console.log("ERROR");
             const token = "Falta token de sesion";
-            return{token, res, collectionIng, collectionRec}
+            return{token, res}
           }
-
-          const collection = db.collection("usuarios");
-          const author = await collection.findOne({token});
-          // if (author == null){
-            
-          //    console.log(`error`)
-          //   const token = "Token de sesion invalido";
-          //   return{token, res}
-          // }else{
-          //   res.status(200);
-          //   console.log(`author email: ${author!.email}`)
-          // }
-
-          return{  token, res, collectionIng, collectionRec}
+          return{  token, res, collectionIng, collectionRec, collectionUsu}
         }//fin añade cosas
+
 
           //const muestra = ["getRecipes", "getRecipe"] 
         else if(muestra.some(f => req.body.query.includes(f))){ //mostrar cosas - usa token 
@@ -108,7 +97,7 @@ const run =async () => {
             const token = "Falta token de sesion";
             return{token, res}
           }
-          return{token, res, collectionIng, collectionRec}
+          return{token, res, collectionIng, collectionRec, collectionUsu}
 
         }
 
